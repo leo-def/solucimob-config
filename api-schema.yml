@@ -1,0 +1,43 @@
+openapi: 3.0.0
+
+info:
+  version: 1.0.0
+  title: Solução Imobiliária Config
+  description: Serviço de configuração para a solução imobiliária
+
+servers:
+  - url: http://{host}:{port}/
+    description: Server de produção
+    variables:
+      host:
+        default: localhost
+        description: Endereço do servidor de produção
+      port:
+        default: '3000'
+  - url: http://localhost:3000/
+    description: Server local para desenvolvimento
+
+paths:
+  /config:
+    get:
+      summary: Configuração da solução imobiliária.
+      description: Retorna a configuração ativa para a solução imobiliária.
+      responses:
+        '200':    # status code
+          description: Configuração ativa para a solução imobiliária
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/Config'
+
+components:
+  schemas:
+    Config:
+      description: Configuração de valores
+      required:
+        - valorM2
+      properties:
+        valorM2:
+          description: Valor do metro quadrado
+          type: number
+ 
