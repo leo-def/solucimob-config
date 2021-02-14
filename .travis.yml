@@ -3,6 +3,9 @@ language: nodejs
 ##Versão instalação
 node_js: 12
 
+env:
+  - DB_TEST=$DB_TEST
+
 install:
   ## Instalação bibliotecas 
   - npm install
