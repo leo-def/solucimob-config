@@ -9,7 +9,7 @@ install:
 
 script:
   ## Testar aplicação 
-  - env DB=$DB_TEST npm run test
+  - DB=$DB_TEST npm run test
   ## Validar padrão do código
   - npm run lint
 
