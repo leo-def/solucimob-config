@@ -1,6 +1,6 @@
 {
   "name": "solucimob-config",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Serviço de configuração para a solução imobiliária",
   "main": "src/Server.ts",
   "scripts": {
