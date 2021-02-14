@@ -1,4 +1,4 @@
-import { ServiceEnum } from "../enums/Service.enum";
+import { ServiceEnum } from '../enums/Service.enum'
 
 /**
  * Ambiente de desenvolvimento
@@ -8,7 +8,7 @@ import { ServiceEnum } from "../enums/Service.enum";
 export const env = () => ({
   env: 'test',
   tz: process.env.TZ,
-  db: process.env.DB || 'mongodb://localhost/solucimob', 
+  db: process.env.DB_TEST || process.env.DB || 'mongodb://localhost/solucimob',
   port: process.env.PORT || 3000,
   domain: process.env.DOMAIN || 'localhost:3000',
   bodyParser: {

@@ -8,8 +8,7 @@ install:
   - npm install
 
 script:
-  ## Testar aplicação 
-  - export DB=$DB_TEST
+  ## Testar aplicação
   - npm run test
   ## Validar padrão do código
   - npm run lint
