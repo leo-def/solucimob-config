@@ -1,5 +1,4 @@
 import mongoose from 'mongoose'
-import { DTO } from '../abstracts/DTO'
 
 const Schema = mongoose.Schema
 /**

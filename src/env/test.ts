@@ -33,7 +33,7 @@ export const env = () => ({
     exposedHeaders: 'x-auth-token'
   },
   config: {
-    valorM2: process.env.CONFIG_VALOR_M2 || 1
+    valorM2: process.env.CONFIG_VALOR_M2 || (Math.random() * 1000)
   },
   services: {
     [ServiceEnum.calc]: { baseUrl: process.env.URL_SERVICE_CALC },
