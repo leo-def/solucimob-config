@@ -16,7 +16,7 @@ import { DatabaseConnect } from './DatabaseConnect'
 import { ResponseHandler } from './ResponseHandler'
 import { LoggerService } from './logger/LoggerService'
 import { ErrorHandler } from './ErrorHandler'
-const swaggerDocument = YAML.load( path.resolve(process.cwd(), 'api-schema.yml'))
+const swaggerDocument = YAML.load(path.resolve(process.cwd(), 'api-schema.yml'))
 
 /**
  * Carrega a configuração principal da aplicação retornando uma
@@ -26,7 +26,7 @@ const swaggerDocument = YAML.load( path.resolve(process.cwd(), 'api-schema.yml')
  */
 export const loadApp = async () => {
   const env = getEnv()
-  const db = DatabaseConnect.connect()
+  const db = await DatabaseConnect.connect()
   const logger = LoggerService.getLogger()
 
   /**
@@ -143,15 +143,14 @@ export const loadApp = async () => {
    *  app.set('json replacer', date.replacer.bind(date));
    *  app.set('json spaces', 2);
    */
-  app.set('json spaces', 2);
+  app.set('json spaces', 2)
 
   /**
    * Configuração da documentação da api
    * @memberof loadApp
    */
-  const validator = new OpenApiValidator(swaggerDocument);
-  app.use(validator.match());
-
+  const validator = new OpenApiValidator(swaggerDocument)
+  app.use(validator.match())
 
   /**
    * Carrega funções comuns no app para serem usadas
@@ -161,7 +160,6 @@ export const loadApp = async () => {
    *
    */
   ResponseHandler.use(app)
-
 
   /**
    * Roteamento da requisição para os serviços
