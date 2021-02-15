@@ -2,9 +2,11 @@ import mongoose from 'mongoose'
 import bluebird from 'bluebird'
 import getEnv from '../env'
 import { LoggerService } from './logger/LoggerService'
+import { MongoMemoryServer } from 'mongodb-memory-server'
 
-export const connect = () => {
+export const connect = async () => {
   const env = getEnv()
+  const uri = await getDbUri(env)
   mongoose.Promise = bluebird
   const logger = LoggerService.getLogger()
   /**
@@ -41,7 +43,7 @@ export const connect = () => {
    *   'mongodb://user:password@sample.com:port/dbname',
    *   { useNewUrlParser: true })
    */
-  const client = mongoose.connect(env.db, CONFIG)
+  const client = mongoose.connect(uri, CONFIG)
 
   /**
    * Inicia o banco em modo debug
@@ -86,6 +88,15 @@ export const connect = () => {
   })
 
   return { client }
+}
+
+export const getDbUri = async (env) => {
+  if (env.env === 'test') {
+    const mongod = new MongoMemoryServer()
+    const uri = await mongod.getUri()
+    return uri
+  }
+  return env.db
 }
 
 /**
