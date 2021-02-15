@@ -18,7 +18,4 @@ export class InitConfig {
     }
     return null
   } // init
-
-
 }
-

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 /**
- * Encapsulamento de valores relacionados ao esquema, para centralizar acesso e evitar 
+ * Encapsulamento de valores relacionados ao esquema, para centralizar acesso e evitar
  *
  * @name ModelWrapper
  * @module commons/ModelFactory
