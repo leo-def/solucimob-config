@@ -1,7 +1,7 @@
 import mongoose from 'mongoose'
 
 /**
- * Encapsulamento de valores relacionados ao esquema, para centralizar acesso e evitar
+ * Encapsulation of schema-related values to centralize access and avoid coupling.
  *
  * @name ModelWrapper
  * @module commons/ModelFactory
@@ -15,15 +15,12 @@ export class ModelWrapper {
   /**
    * @constructor
    *
-   * @param {any} key Chave de identificação do esquema
-   * @param {any} schemaFunc Função que cria o esquema
-   * @param {any} dependencieKeys Chave dos esquemas necessários para
-   *   o carregamento deste
-   * @param {any} collectionName Nome da coleção manipulada
-   *  na base de dados
-   * @param {ModelFactory} factory Objeto de gerênciamento que instanciou a classe
-   * @param {any} populate Dados para o preenchimento automático de
-   *   documentos embutidos
+   * @param {any} key Schema identification key
+   * @param {any} schemaFunc Function that creates the schema
+   * @param {any} dependencieKeys Keys of schemas required for loading this schema
+   * @param {any} collectionName Name of the database collection
+   * @param {ModelFactory} factory Management object that instantiated the class
+   * @param {any} populate Data for automatic populate of embedded documents
    *
    * @returns ModelFactory
    */
@@ -41,7 +38,7 @@ export class ModelWrapper {
   }
 
   /**
-   * CDependências para a conversão do esquema
+   * Dependencies required for converting the schema.
    *
    */
   get dependencies () {
@@ -54,8 +51,7 @@ export class ModelWrapper {
   }
 
   /**
-   * Carrega e configura os objetos relacionados a base de dados
-   *   de acordo com os dados da instância
+   * Loads and configures the database-related objects based on instance data.
    *
    * @returns {any}
    */
@@ -89,10 +85,9 @@ export class ModelWrapper {
   }
 
   /**
-   * Carrega o preenchimento automático de documentos embutidos
-   *   de acordo com os dados da instância
+   * Loads the automatic populate of embedded documents based on instance data.
    *
-   * @param {any} model Esquema a ser carregado
+   * @param {any} model Schema to be loaded
    *
    * @returns {any}
    */
@@ -101,21 +96,21 @@ export class ModelWrapper {
       return null
     }
     const result = populate.map((obj: any) => {
-      // se o objeto for um texto, esse texto refere ao caminho a ser populado
+      // If the object is a string, it represents the path to be populated
       if (typeof obj === 'string') {
         obj = { path: obj }
       }
-      // se o objeto tiver o nome da collection, nao precisa ser alterado, pois ja tem o nome da coleção
+      // If the object already contains the collectionName, it does not need modification
       if (obj.collectionName) {
         return obj
       }
-      // se não for definido a referencia ele pega do schema
+      // If ref is not defined, retrieve it from the schema path options
       const ref =
         obj.ref ||
         (schema.path(obj.path) ? schema.path(obj.path).options.ref : null)
-      // Procura o wrapper que está sendo referenciado
+      // Look up the wrapper that is being referenced
       const wrapper = this.dependencies[ref]
-      // adiciona o nome da coleção a dependência
+      // Add the collection name to the dependency details
       const collectionName = wrapper
         ? wrapper.model.collection.collectionName
         : null
@@ -129,10 +124,9 @@ export class ModelWrapper {
   }
 
   /**
-   * Gera os dados de preenchimento automático de documentos embutidos
-   *   pela chave
+   * Generates the automatic populate data for embedded documents by key.
    *
-   * @param {any} populate Dados do preenchimento automático
+   * @param {any} populate Automatic populate data
    *
    * @returns {any}
    */
