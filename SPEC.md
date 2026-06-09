@@ -1,230 +1,186 @@
 # Solucimob Config - Technical Specification
 
-> Technical specification for the Solucimob Configuration Management Microservice.
-> Reference for understanding configuration service patterns and tenant management.
+> Real estate configuration microservice providing valor/m² (price per square meter) via REST API.
+> Built with TypeScript + Express + Mongoose, with service discovery, structured logging, and OpenAPI docs.
 
 ## Executive Summary
 
-- **Project**: Solucimob Config (Configuration Microservice)
-- **Type**: Node.js REST Microservice
-- **Language**: JavaScript (Node.js 18+)
-- **Framework**: Express.js
-- **Status**: Active Development
-- **Owner**: Development team
+Solucimob Config is a **Node.js microservice** (TypeScript + Express + Mongoose) that acts as a configuration provider for the "Solução Imobiliária" real estate suite. It exposes a single `GET /config` endpoint returning the current `valorM2` (price per m²), stored in MongoDB. The service features abstract base classes for Router/Service/Schema/DTO, a `ServiceDiscovery` pattern for inter-service calls, environment-based configuration (dev/prod/test), structured Winston logging, and CI/CD via BitBucket Pipelines + Travis CI.
 
 ---
 
 ## 1. Problem Statement
 
 ### Context
-Solucimob Config manages global tenant configurations, business rules, and system parameters for the real estate platform. It has no external dependencies and serves as the single source of truth for configuration data.
+The "Solução Imobiliária" suite needs a centralized configuration service to manage dynamic values (like real estate prices) that other services (e.g., `solucimob-calc`) consume at runtime without redeployment.
 
 ### Goals
-- **Primary**: Centralize configuration and rule management
-- **Secondary**: Provide dynamic configuration updates without service restarts
-- **Tertiary**: Support multi-tenant configuration isolation
+- Expose current `valorM2` via REST API
+- Enable other services to fetch config values dynamically
+- Abstract common patterns into reusable base classes (Router, Service, Schema, DTO)
+- Environment-based configuration (development/production/test)
 
 ### Success Metrics
-- [x] REST API for configuration management
-- [x] Multi-tenant support with isolation
-- [x] No external service dependencies
-- [x] Docker containerization
-- [x] Health check endpoint
-- [x] Configuration versioning and history
-- [ ] Real-time configuration updates via WebSockets
-- [ ] >85% test coverage
+- [x] `GET /config` endpoint returning `{ valorM2: number }`
+- [x] MongoDB persistence via Mongoose
+- [x] Abstract Router/Service/Schema/DTO base classes
+- [x] Environment-aware config (dev/prod/test)
+- [x] Winston structured logging (per environment)
+- [x] ServiceDiscovery for inter-service HTTP calls
+- [x] OpenAPI 3.0 spec (`api-schema.yml`)
+- [x] BitBucket Pipelines + Travis CI
 
 ---
 
 ## 2. Technology Stack
 
-| Component | Technology | Version | Rationale |
-|-----------|-----------|---------|-----------|
-| Runtime | Node.js | 18.0+ | Server-side JavaScript |
-| Framework | Express.js | 4.18+ | Lightweight web framework |
-| Database | MongoDB Atlas | Latest | Configuration data store |
-| Caching | Redis (optional) | Latest | Configuration caching layer |
-| Testing | Jest | 27.0+ | Testing framework |
-| Docs | Swagger/JSDoc | 3.0 | API documentation |
-
-### Key Dependencies
-- `express`: HTTP server framework
-- `dotenv`: Environment variable management
-- `joi`: Schema validation
-- `jest`: Testing framework (dev)
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| Language | TypeScript | 4.1.5 |
+| Runtime | Node.js | LTS |
+| Framework | Express | 4.17.1 |
+| Database | MongoDB (Mongoose) | 5.11.15 |
+| ORM | Mongoose | 5.11.15 |
+| HTTP Client | Axios | 0.21.1 |
+| Logging | Winston | 3.3.3 |
+| API Docs | Swagger UI (yaml) | 4.1.6 |
+| Testing | Jest | 26.6.3 |
+| Build | Babel + tsc | Latest |
+| CI | BitBucket Pipelines + Travis CI | - |
 
 ---
 
 ## 3. Architecture
 
-### Configuration Service Architecture
+```
+HTTP Client → GET /config
+                ↓
+           Express Router
+           (ConfigRouter extends Router)
+                ↓
+           ConfigService extends Service
+                ↓
+           ConfigSchema extends Schema (Mongoose)
+                ↓
+           MongoDB (in-memory for tests: mongodb-memory-server)
 
-```
-┌────────────────────────────────────────────┐
-│       Express HTTP Layer                   │
-│  GET /health, GET/POST /api/config         │
-└────────────────────┬─────────────────────────┘
-                     │
-┌────────────────────▼─────────────────────────┐
-│     Controller Layer                         │
-│  (Request validation, response formatting)   │
-└────────────────────┬─────────────────────────┘
-                     │
-┌────────────────────▼─────────────────────────┐
-│     Service Layer                            │
-│  (Configuration management & rules)          │
-└────────────────────┬─────────────────────────┘
-                     │
-    ┌────────────────┴────────────────┐
-    │                                 │
-    ▼                                 ▼
-┌──────────────┐              ┌──────────────┐
-│ Repository   │              │ Cache Layer  │
-│ (MongoDB)    │              │ (Redis)      │
-└──────────────┘              └──────────────┘
-    │                                 │
-    ▼                                 ▼
-  MongoDB                     Redis Cache
-  Atlas                       (optional)
-```
-
-### Configuration Categories
-```
-Valuation Rules       - Property evaluation methods
-Tax Parameters        - Tax calculation rules
-Commission Rules      - Agent commission structure
-Feature Flags         - Feature enable/disable
-Thresholds            - Business limits and boundaries
+ServiceDiscovery ← (used by other services to call this)
+ApiClient (Axios wrapper)
+LoggerService (Winston, env-aware)
 ```
 
 ---
 
-## 4. Project Structure
+## 4. Module Structure
 
 ```
 src/
-├── index.js                  # Entry point
-├── config/
-│   └── database.js          # MongoDB connection
-├── routes/
-│   ├── health.js            # Health check
-│   ├── config.js            # Configuration endpoints
-│   └── rules.js             # Business rules endpoints
-├── controllers/
-│   ├── configController.js
-│   └── rulesController.js
-├── services/
-│   ├── configService.js      # Config management
-│   ├── rulesService.js       # Rule management
-│   └── cacheService.js       # Caching layer
-├── models/
-│   ├── Config.js            # MongoDB schema
-│   ├── Rule.js              # Rule schema
-│   └── Tenant.js            # Multi-tenant data
-├── middleware/
-│   ├── errorHandler.js
-│   ├── validation.js
-│   └── tenantMiddleware.js  # Multi-tenant isolation
-└── utils/
-    └── validators.js        # Joi schemas
-
-test/
-├── unit/
-│   └── configService.test.js
-└── integration/
-    └── configAPI.test.js
-
-.env.example
-.eslintrc.json
-jest.config.js
-package.json
+  Server.ts                    # Express app bootstrap
+  routes/
+    Router.ts                  # Root router registration
+    api/
+      ConfigRouter.ts          # GET /config endpoint
+  services/
+    ConfigService.ts           # Business logic (fetch config from MongoDB)
+  schemas/
+    ConfigSchema.ts            # Mongoose schema for Config model
+    Schemas.ts                 # Schema registry
+  config/
+    AppLoader.ts               # Express middleware setup (cors, helmet, morgan, etc.)
+    DatabaseConnect.ts         # Mongoose connection
+    ErrorHandler.ts            # Global error handler
+    ResponseHandler.ts         # Standard response format
+    ModelFactoryLoader.ts      # Model registration
+    DateUtils.ts               # Date utilities
+    InitConfig.ts              # App initialization
+    logger/
+      LoggerService.ts         # Winston logger factory
+      config/                  # Per-environment log configs (dev/prod/test)
+  commons/
+    ApiClient.ts               # Axios-based HTTP client (for inter-service calls)
+    ServiceDiscovery.ts        # Discovers other services by enum
+    ModelFactory/              # Dynamic model creation wrapper
+  abstracts/
+    Router.ts                  # Abstract base class for routers
+    Service.ts                 # Abstract base class for services
+    Schema.ts                  # Abstract base class for schemas
+    DTO.ts                     # Abstract base class for DTOs
+  enums/
+    Service.enum.ts            # Known services in the suite (CONFIG, CALC)
+  env/
+    index.ts / development.ts / production.ts / test.ts
+  errors/
+    AuthError.ts               # Custom auth error
 ```
 
 ---
 
-## 5. Key Endpoints
+## 5. API Endpoints
 
-### Health
 ```
-GET /health
-  Response: { status: 'ok', service: 'config' }
+GET /config    → Returns active config
 ```
 
-### Configuration
-```
-GET /api/config/:tenant/:category
-  Response: { configuration: {...} }
-
-POST /api/config/:tenant/:category
-  Body: { settings: {...} }
-  Response: { success: true, configuration: {...} }
-
-PUT /api/config/:tenant/:category
-  Body: { settings: {...} }
-  Response: { success: true, configuration: {...} }
-
-DELETE /api/config/:tenant/:category
-  Response: { success: true }
-```
-
-### Rules
-```
-GET /api/rules/valuation
-  Response: { rules: {...} }
-
-GET /api/rules/commission
-  Response: { rules: {...} }
-
-POST /api/rules/:ruleType
-  Body: { rule: {...} }
-  Response: { success: true }
-```
-
----
-
-## 6. Multi-Tenant Support
-
-### Tenant Isolation
-
-```javascript
-// Configuration is scoped to tenant
-GET /api/config/:tenantId/valuation-rules
-
-// Each tenant has isolated configuration
-{
-  "tenant-1": { "rules": {...} },
-  "tenant-2": { "rules": {...} }
-}
-```
-
----
-
-## 7. Configuration Schema
-
-### Example: Valuation Rules
-
+**Response:**
 ```json
 {
-  "tenant": "tenant-1",
-  "category": "valuation",
-  "rules": {
-    "comparableMethod": {
-      "weight": 0.6,
-      "minComps": 3,
-      "radiusKm": 5
-    },
-    "costMethod": {
-      "weight": 0.2,
-      "depreciationRate": 0.03
-    },
-    "incomeMethod": {
-      "weight": 0.2,
-      "capRate": 0.05
-    }
-  },
-  "version": 1,
-  "updatedAt": "2024-06-01T12:00:00Z",
-  "createdBy": "admin"
+  "valorM2": 1500.00
 }
 ```
 
+OpenAPI spec: `api-schema.yml`
+
+---
+
+## 6. Data Models
+
+```typescript
+// Config (Mongoose Schema)
+{
+  valorM2: Number   // Required — price per square meter
+}
+```
+
+---
+
+## 7. Testing Strategy
+
+```bash
+npm test    # Jest with mongodb-memory-server (in-memory MongoDB)
+```
+
+Tests: `ConfigRouter.spec.ts`, `ServiceDiscovery.spec.ts`, type specs.
+
+---
+
+## 8. Deployment & Operations
+
+```bash
+npm run dev          # ts-node-dev hot-reload
+npm run build        # Babel transpile to dist/
+npm start            # node dist/Server.js
+npm run start:lw     # Low-memory mode (920MB heap limit)
+npm run start:xlw    # Extra low-memory mode (460MB heap limit)
+```
+
+**CI:** BitBucket Pipelines (`bitbucket-pipelines.yml`) + Travis CI (`.travis.yml`)  
+**Hosting:** Heroku (Procfile: `web: npm start`)  
+**Port:** 3000 (default)
+
+---
+
+## 9. Issues Found
+
+### Dependencies
+- **Mongoose 5.11.15 is severely outdated** (current is 8.x) — lacks TypeScript improvements, performance fixes, and security patches.
+- **Axios 0.21.1 is outdated** — current is 1.x. The 0.x series has multiple CVEs.
+- **Express 4.17.1** — still maintained but 5.x is available with async error handling.
+- **TypeScript 4.1.5** — current is 5.x.
+
+### Design
+- **`mongodb-memory-server` is a production dependency** (not devDependency) — it downloads a MongoDB binary at install time, bloating production images unnecessarily. Should be moved to `devDependencies`.
+- **`ConfigService`** directly accesses `req` and `res` objects in service methods (`async find(req, res)`) — services should not handle HTTP layer concerns. HTTP handling belongs in the router/controller.
+
+### Missing
+- No input validation on config update (if PUT endpoint exists).
+- No authentication on `GET /config` — any service or external caller can read pricing config.
